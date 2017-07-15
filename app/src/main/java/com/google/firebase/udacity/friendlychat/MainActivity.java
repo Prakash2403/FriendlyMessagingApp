@@ -90,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
 
         mMessagesDatabaseReference = mFirebaseDatabase.getReference().child("messages");
         mChatPhotosStorageReference = mFirebaseStorage.getReference().child("chat_photos");
-
         // Initialize references to views
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
         mMessageListView = (ListView) findViewById(R.id.messageListView);
@@ -112,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 // TODO: Fire an intent to show an image picker
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/jpeg");
+                intent.setType("image/jpg");
                 intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
                 startActivityForResult(Intent.createChooser(intent, "Complete Action using"), RC_PHOTO_PICKER);
             }
@@ -180,30 +179,32 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if( requestCode == RC_SIGN_IN ) {
-            if( resultCode == RESULT_OK ) {
+        if( requestCode == RC_SIGN_IN) {
+            if(resultCode == RESULT_OK) {
                 Toast.makeText(this, "Sign-In Successful", Toast.LENGTH_SHORT).show();
-            } else if( resultCode == RESULT_CANCELED ) {
+            } else if(resultCode == RESULT_CANCELED) {
                 Toast.makeText(this, "Sign-In Cancelled", Toast.LENGTH_SHORT).show();
                 finish();
-            } else if( requestCode==RC_PHOTO_PICKER && resultCode==RESULT_OK) {
-                Uri selectedImageUri = data.getData();
-
-                //Get a reference to store file at chat_photos/<FILENAME>
-                StorageReference photoRef = mChatPhotosStorageReference.child(selectedImageUri.getLastPathSegment());
-
-                //Upload File to Firebase storage
-                photoRef.putFile(selectedImageUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                        FriendlyMessage friendlyMessage = new FriendlyMessage(null, mUsername, downloadUrl.toString());
-                        mMessagesDatabaseReference.push().setValue(friendlyMessage);
-                    }
-                });
             }
         }
+        else if(requestCode == RC_PHOTO_PICKER && resultCode == RESULT_OK) {
+            Uri selectedImageUri = data.getData();
+
+            //Get a reference to store file at chat_photos/<FILENAME>
+            StorageReference photoRef = mChatPhotosStorageReference.child(selectedImageUri.getLastPathSegment());
+            //Upload File to Firebase storage
+            photoRef.putFile(selectedImageUri).addOnSuccessListener(this, new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    FriendlyMessage friendlyMessage = new FriendlyMessage(null, mUsername,
+                            downloadUrl.toString());
+                    mMessagesDatabaseReference.push().setValue(friendlyMessage);
+                }
+            });
+        }
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
